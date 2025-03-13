@@ -19,17 +19,30 @@ if ($conn->connect_error) {
 if (isset($_POST['name'])) {
     $name = $_POST['name'];
 
-    // Prepare and bind
-    $stmt = $conn->prepare("INSERT INTO usuaris (nom_usuari, puntuacio) VALUES (?, 0)");
+    // Check if the user already exists
+    $stmt = $conn->prepare("SELECT id_usuari FROM usuaris WHERE nom_usuari = ?");
     $stmt->bind_param("s", $name);
+    $stmt->execute();
+    $stmt->store_result();
 
-    // Execute the statement
-    if ($stmt->execute()) {
+    if ($stmt->num_rows > 0) {
+        // User already exists
         http_response_code(200);
-        echo "Name submitted successfully";
+        echo "User already exists";
     } else {
-        http_response_code(500);
-        echo "Error: " . $stmt->error;
+        // User does not exist, create a new user
+        $stmt->close();
+        $stmt = $conn->prepare("INSERT INTO usuaris (nom_usuari, puntuacio) VALUES (?, 0)");
+        $stmt->bind_param("s", $name);
+
+        // Execute the statement
+        if ($stmt->execute()) {
+            http_response_code(200);
+            echo "Name submitted successfully";
+        } else {
+            http_response_code(500);
+            echo "Error: " . $stmt->error;
+        }
     }
 
     // Close the statement

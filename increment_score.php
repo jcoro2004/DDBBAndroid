@@ -3,10 +3,9 @@ header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $name = $_POST['name'];
-    $score = $_POST['score'];
 
-    if (empty($name) || empty($score)) {
-        echo json_encode(['success' => false, 'message' => 'Name or score is missing']);
+    if (empty($name)) {
+        echo json_encode(['success' => false, 'message' => 'Name is missing']);
         exit;
     }
 
@@ -22,14 +21,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         die(json_encode(['success' => false, 'message' => 'Connection failed: ' . $conn->connect_error]));
     }
 
-    // Actualizar la puntuación del usuario
-    $stmt = $conn->prepare("UPDATE usuaris SET puntuacio = ? WHERE nom_usuari = ?");
-    $stmt->bind_param("is", $score, $name);
-
+    // Incrementar la puntuación del usuario
+    $stmt = $conn->prepare("UPDATE usuaris SET puntuacio = puntuacio + 1 WHERE nom_usuari = ?");
+    $stmt->bind_param("s", $name);
     if ($stmt->execute()) {
-        echo json_encode(['success' => true, 'message' => 'Score updated successfully']);
+        echo json_encode(['success' => true, 'message' => 'Score incremented successfully']);
     } else {
-        echo json_encode(['success' => false, 'message' => 'Failed to update score: ' . $stmt->error]);
+        echo json_encode(['success' => false, 'message' => 'Failed to increment score: ' . $stmt->error]);
     }
 
     $stmt->close();
